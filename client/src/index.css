@@ -1,0 +1,64 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===============================
+   GLOBAL RESET & BASE STYLING
+================================= */
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-main-gradient text-secondary font-sans antialiased;
+}
+
+/* Better text rendering */
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Selection color */
+::selection {
+  background-color: #FF6B00;
+  color: white;
+}
+
+/* ===============================
+   REUSABLE PREMIUM UTILITIES
+================================= */
+
+/* Glass Effect */
+.glass {
+  @apply bg-white/60 backdrop-blur-lg border border-white/40 shadow-premium;
+}
+
+/* Premium Button */
+.btn-primary {
+  @apply bg-button-gradient text-white px-6 py-3 rounded-2xl 
+  shadow-lg hover:shadow-glow transition-all duration-300 
+  hover:scale-105 active:scale-95;
+}
+
+/* Secondary Button */
+.btn-secondary {
+  @apply bg-black text-white px-6 py-3 rounded-2xl 
+  transition-all duration-300 hover:scale-105 active:scale-95;
+}
+
+/* Section Padding */
+.section-padding {
+  @apply py-20 px-6 md:px-12;
+}
+
+/* Gradient Text */
+.gradient-text {
+  @apply bg-clip-text text-transparent bg-button-gradient;
+}
+
+/* Floating Animation Utility */
+.float-animation {
+  animation: float 4s ease-in-out infinite;
+}
