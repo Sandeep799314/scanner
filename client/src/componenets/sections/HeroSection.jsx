@@ -9,7 +9,8 @@ const HeroSection = () => {
       <div className="absolute top-20 right-10 w-72 h-72 bg-primary/20 rounded-full blur-3xl"></div>
       <div className="absolute bottom-10 left-10 w-72 h-72 bg-pink-300/20 rounded-full blur-3xl"></div>
 
-      <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-12 items-center relative z-10">
+      {/* 🔥 Changed max width + column ratio */}
+      <div className="max-w-6xl mx-auto grid md:grid-cols-[1.1fr_0.9fr] gap-16 items-center relative z-10 px-6">
 
         {/* LEFT CONTENT */}
         <motion.div
@@ -21,7 +22,7 @@ const HeroSection = () => {
             🚀 AI Powered Business Tool
           </p>
 
-          <h1 className="text-4xl md:text-6xl font-bold leading-tight">
+          <h1 className="text-4xl md:text-5xl font-bold leading-tight">
             Scan Business Cards
             <br />
             <span className="gradient-text">
@@ -29,7 +30,7 @@ const HeroSection = () => {
             </span>
           </h1>
 
-          <p className="mt-6 text-muted text-lg max-w-lg">
+          <p className="mt-6 text-muted text-lg max-w-md">
             Upload any business card and extract name, email, phone,
             company details in seconds using intelligent OCR technology.
             Save time and grow your network faster.
@@ -55,7 +56,8 @@ const HeroSection = () => {
           transition={{ duration: 0.9 }}
           className="relative flex justify-center"
         >
-          <div className="glass rounded-3xl p-8 w-[320px] float-animation">
+          {/* 🔥 Slightly bigger card */}
+          <div className="glass rounded-3xl p-8 w-[360px] float-animation shadow-xl">
 
             <h3 className="font-semibold text-lg mb-4">
               Extracted Details

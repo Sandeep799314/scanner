@@ -1,161 +1,238 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { UploadCloud } from "lucide-react";
 import Loader from "./Loader";
 import ScanResult from "./ScanResult";
 import { scanCard } from "../../services/api";
+import WhatsAppShareModal from "../whatsapp/WhatsAppShareModal";
 
-const CardScanner = () => {
-  const [image, setImage] = useState(null);
-  const [preview, setPreview] = useState(null);
+const CardScanner = ({ onResultChange }) => {
+  const [images, setImages] = useState([]);
+  const [previews, setPreviews] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState(null);
+  const [results, setResults] = useState([]);
   const [error, setError] = useState("");
+  const [currentIndex, setCurrentIndex] = useState(0);
 
-  /* ===============================
-     HANDLE FILE CHANGE
-  =============================== */
-  const handleFileChange = (file) => {
-    if (!file) return;
+  const hasResults = results.length > 0;
 
-    // Validate file type
-    if (!file.type.startsWith("image/")) {
-      setError("Please upload a valid image file.");
+  /* ================= FILE CHANGE ================= */
+  const handleFileChange = (files) => {
+    if (!files?.length) return;
+
+    const validFiles = Array.from(files).filter((file) =>
+      file.type.startsWith("image/")
+    );
+
+    if (!validFiles.length) {
+      setError("Please upload valid image files.");
       return;
     }
 
     setError("");
-    setResult(null);
+    setResults([]);
+    setCurrentIndex(0);
+    onResultChange?.(0);
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setPreview(reader.result);
-    };
-
-    reader.readAsDataURL(file);
-    setImage(file);
+    setImages(validFiles);
+    setPreviews(validFiles.map((file) => URL.createObjectURL(file)));
   };
 
-  /* ===============================
-     DRAG DROP
-  =============================== */
-  const handleDrop = (e) => {
-    e.preventDefault();
-    const file = e.dataTransfer.files[0];
-    handleFileChange(file);
-  };
-
-  /* ===============================
-     HANDLE SCAN
-  =============================== */
+  /* ================= SCAN ================= */
   const handleScan = async () => {
-    if (!image) {
-      setError("Please upload a business card image.");
+    if (!images.length) {
+      setError("Please upload business card images.");
       return;
     }
 
     try {
       setLoading(true);
       setError("");
-      setResult(null);
 
-      const response = await scanCard(image);
+      const formData = new FormData();
+      images.forEach((image) => formData.append("cards", image));
 
-      // Handle different backend structures safely
-      const extractedData =
-        response?.data ||
-        response?.card ||
-        response;
+      const response = await scanCard(formData);
+      const data = response?.data || [];
+      const finalResults = Array.isArray(data) ? data : [data];
 
-      setResult(extractedData);
-    } catch (err) {
-      setError(
-        err?.message ||
-        "Something went wrong while scanning."
-      );
+      setResults(finalResults);
+      setCurrentIndex(0);
+      onResultChange?.(finalResults.length);
+    } catch {
+      setError("Something went wrong while scanning.");
     } finally {
       setLoading(false);
     }
   };
 
-  /* ===============================
-     UI
-  =============================== */
+  /* ================= NAVIGATION ================= */
+  const handleNext = () => {
+    if (currentIndex < results.length - 1) {
+      setCurrentIndex(currentIndex + 1);
+    }
+  };
+
+  const handlePrev = () => {
+    if (currentIndex > 0) {
+      setCurrentIndex(currentIndex - 1);
+    }
+  };
+
+  /* ================= COPY ================= */
+  const handleCopy = (data) => {
+    const text = `
+Name: ${data?.name || ""}
+Email: ${data?.email || ""}
+Phone: ${data?.phone || ""}
+Company: ${data?.company || ""}
+    `;
+    navigator.clipboard.writeText(text);
+  };
+
   return (
-    <div className="w-full">
+    <div className="w-full max-w-5xl mx-auto py-8">
 
-      {/* Drag & Drop Area */}
-      <motion.div
-        whileHover={{ scale: 1.02 }}
-        onDrop={handleDrop}
-        onDragOver={(e) => e.preventDefault()}
-        className="border-2 border-dashed border-primary/30 rounded-3xl p-6 text-center cursor-pointer transition-all bg-white/40 backdrop-blur-md"
-      >
-        <input
-          type="file"
-          accept="image/*"
-          className="hidden"
-          id="fileUpload"
-          onChange={(e) =>
-            handleFileChange(e.target.files[0])
-          }
-        />
+      {/* ================= BEFORE SCAN ================= */}
+      {!hasResults && (
+        <div className="flex flex-col items-center">
 
-        <label htmlFor="fileUpload" className="cursor-pointer">
+          <div className="w-full max-w-xl border-2 border-dashed border-orange-300 rounded-2xl p-8 bg-white text-center shadow-sm">
 
-          {!preview ? (
-            <div className="flex flex-col items-center gap-4">
-              <UploadCloud
-                size={40}
-                className="text-primary"
-              />
-              <p className="text-muted">
-                Drag & Drop your card image here <br />
-                or{" "}
-                <span className="text-primary font-medium">
-                  Click to Upload
-                </span>
-              </p>
-            </div>
-          ) : (
-            <motion.img
-              key={preview}
-              src={preview}
-              alt="Preview"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="rounded-2xl max-h-56 mx-auto object-contain"
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              hidden
+              id="fileUpload"
+              onChange={(e) => handleFileChange(e.target.files)}
             />
+
+            <label htmlFor="fileUpload" className="cursor-pointer block">
+
+              {!previews.length ? (
+                <p className="text-gray-400">
+                  Click or drag images here
+                </p>
+              ) : (
+                <div className="grid grid-cols-2 gap-4">
+                  {previews.map((preview, index) => (
+                    <img
+                      key={index}
+                      src={preview}
+                      className="h-32 w-full rounded-xl object-cover"
+                    />
+                  ))}
+                </div>
+              )}
+
+            </label>
+          </div>
+
+          {error && (
+            <p className="text-red-500 text-sm mt-3">{error}</p>
           )}
 
-        </label>
-      </motion.div>
+          <button
+            onClick={handleScan}
+            disabled={loading}
+            className="mt-6 bg-orange-500 hover:bg-orange-600 text-white px-8 py-3 rounded-full shadow-md"
+          >
+            {loading ? "Processing..." : "Scan Card"}
+          </button>
 
-      {/* Error Message */}
-      {error && (
-        <p className="text-red-500 text-sm mt-3 text-center">
-          {error}
-        </p>
+          {loading && <Loader />}
+        </div>
       )}
 
-      {/* Scan Button */}
-      <button
-        onClick={handleScan}
-        disabled={loading}
-        className="btn-primary w-full mt-6"
-      >
-        {loading ? "Processing..." : "Scan Card"}
-      </button>
+      {/* ================= AFTER SCAN ================= */}
+      {hasResults && (
+        <div className="flex flex-col md:flex-row gap-12 items-start">
 
-      {/* Loader */}
-      <AnimatePresence>
-        {loading && <Loader />}
-      </AnimatePresence>
+          {/* LEFT SIDE */}
+          <div className="w-full md:w-1/2">
 
-      {/* Result */}
-      <AnimatePresence>
-        {result && <ScanResult data={result} />}
-      </AnimatePresence>
+            <h2 className="text-xl font-bold mb-5">
+              Smart Business Card Scanner
+            </h2>
+
+            <div className="grid grid-cols-2 gap-4">
+              {previews.map((preview, index) => (
+                <img
+                  key={index}
+                  src={preview}
+                  onClick={() => setCurrentIndex(index)}
+                  className={`h-32 w-full rounded-xl object-cover cursor-pointer
+                    ${currentIndex === index ? "ring-2 ring-orange-500" : ""}
+                  `}
+                />
+              ))}
+            </div>
+
+            {/* ✅ WhatsApp Modal Component */}
+     <WhatsAppShareModal
+  currentData={results[currentIndex]}
+  allResults={results}
+/>
+
+          </div>
+
+          {/* RIGHT SIDE */}
+          <div className="w-full md:w-1/2 flex justify-center">
+
+            <div className="w-full max-w-md">
+
+              {/* Navigation */}
+              <div className="flex items-center justify-between mb-4">
+                <button
+                  onClick={handlePrev}
+                  disabled={currentIndex === 0}
+                  className="px-3 py-1 bg-gray-200 rounded disabled:opacity-40"
+                >
+                  Prev
+                </button>
+
+                <p className="text-sm text-gray-500">
+                  Result {currentIndex + 1} of {results.length}
+                </p>
+
+                <button
+                  onClick={handleNext}
+                  disabled={currentIndex === results.length - 1}
+                  className="px-3 py-1 bg-gray-200 rounded disabled:opacity-40"
+                >
+                  Next
+                </button>
+              </div>
+
+              {/* Copy Button */}
+              <div className="flex justify-end mb-3">
+                <button
+                  onClick={() => handleCopy(results[currentIndex])}
+                  className="bg-orange-500 hover:bg-orange-600 text-white text-xs px-3 py-1 rounded-full"
+                >
+                  Copy
+                </button>
+              </div>
+
+              {/* Animated Result */}
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentIndex}
+                  initial={{ opacity: 0, x: 30 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -30 }}
+                  transition={{ duration: 0.25 }}
+                >
+                  <ScanResult data={results[currentIndex]} />
+                </motion.div>
+              </AnimatePresence>
+
+            </div>
+
+          </div>
+
+        </div>
+      )}
 
     </div>
   );

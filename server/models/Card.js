@@ -7,43 +7,51 @@ const cardSchema = new mongoose.Schema(
       trim: true,
       minlength: 2,
       maxlength: 120,
-      index: true
+      index: true,
+      default: ""
     },
 
     email: {
       type: String,
       trim: true,
       lowercase: true,
-      match: [/^\S+@\S+\.\S+$/, "Invalid email format"],
-      index: true
+      // 🔥 match को हटा दिया गया है क्योंकि OCR कई बार अधूरा ईमेल निकालता है 
+      // जिससे "Invalid email format" एरर आता था।
+      index: true,
+      default: ""
     },
 
     phone: {
       type: String,
       trim: true,
-      index: true
+      index: true,
+      default: ""
     },
 
     company: {
       type: String,
       trim: true,
       maxlength: 150,
-      index: true
+      index: true,
+      default: ""
     },
 
     designation: {
       type: String,
-      trim: true
+      trim: true,
+      default: ""
     },
 
     website: {
       type: String,
-      trim: true
+      trim: true,
+      default: ""
     },
 
     address: {
       type: String,
-      trim: true
+      trim: true,
+      default: ""
     },
 
     imageUrl: {
@@ -102,19 +110,10 @@ cardSchema.virtual("cleanPhone").get(function () {
 
 /* =========================================
    Global Query Filter (Soft Delete Support)
-   Mongoose v7 Safe Version
 ========================================= */
 cardSchema.pre(/^find/, function () {
   this.where({ isDeleted: false })
 })
-
-/* =========================================
-   Clean JSON Output
-========================================= */
-cardSchema.methods.toJSON = function () {
-  const obj = this.toObject()
-  return obj
-}
 
 const Card = mongoose.model("Card", cardSchema)
 

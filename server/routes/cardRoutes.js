@@ -31,17 +31,13 @@ const uploadLimiter = rateLimit({
 ========================================= */
 
 /**
- * SAFE UPGRADE VERSION
- *
- * Supports:
- * - Single file (cardImage)
- * - Multiple files (cardImages[])
- * - Front / Back future support
+ * @route   POST /api/cards/upload
+ * @desc    Upload & Scan Multiple Business Cards
  */
 router.post(
   "/upload",
   uploadLimiter,
-  uploadMiddleware.any(),   // 🔥 IMPORTANT CHANGE
+  uploadMiddleware.array("cards", 10),   // ✅ MULTIPLE FILE SUPPORT
   uploadCard
 );
 

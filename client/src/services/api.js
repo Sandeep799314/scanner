@@ -12,18 +12,23 @@ const API = axios.create({
 });
 
 /* =========================================
-   UPLOAD & SCAN CARD
+   UPLOAD & SCAN MULTIPLE CARDS
 ========================================= */
 
-export const scanCard = async (file) => {
+export const scanCard = async (formData) => {
   try {
-    const formData = new FormData();
+    /*
+      IMPORTANT:
+      CardScanner.jsx must send:
 
-    // ⚠️ IMPORTANT: backend expects "cardImage"
-    formData.append("cardImage", file);
+      const formData = new FormData();
+      images.forEach((image) => {
+        formData.append("cards", image);
+      });
+    */
 
     const response = await API.post(
-      "/cards/upload",
+      "/cards/upload",   // ✅ matches backend route
       formData,
       {
         headers: {
@@ -32,13 +37,17 @@ export const scanCard = async (file) => {
       }
     );
 
-    return response.data.data || response.data;
+    return response.data;
+
   } catch (error) {
-    console.error("Scan API Error:", error?.response || error.message);
+    console.error(
+      "Scan API Error:",
+      error?.response || error.message
+    );
 
     throw new Error(
       error?.response?.data?.message ||
-      "Failed to scan card. Please try again."
+      "Failed to scan cards. Please try again."
     );
   }
 };
